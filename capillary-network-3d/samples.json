@@ -1,0 +1,215 @@
+{
+ "default": "2026-10-19-wt-cd31-120-488-larger-left-01",
+ "samples": [
+  {
+   "id": "2026-10-16-cd31-120-488-het",
+   "genotype": "Het",
+   "animal": "Het 16 Oct",
+   "date": "16 Oct 2026",
+   "name": "CD31_120_488_Het"
+  },
+  {
+   "id": "2026-10-16-wt-cd31-120-488-07",
+   "genotype": "WT",
+   "animal": "WT 16 Oct",
+   "date": "16 Oct 2026",
+   "name": "Wt CD31_120_ 488-07"
+  },
+  {
+   "id": "2026-10-19-het-1-cd31-120-488-bc-01",
+   "genotype": "Het",
+   "animal": "Het(1)",
+   "date": "19 Oct 2026",
+   "name": "Het(1) CD31_120_ 488 BC -01"
+  },
+  {
+   "id": "2026-10-19-het-1-cd31-120-488-bc-left-01",
+   "genotype": "Het",
+   "animal": "Het(1)",
+   "date": "19 Oct 2026",
+   "name": "Het(1) CD31_120_ 488 BC left-01"
+  },
+  {
+   "id": "2026-10-19-het-1-cd31-120-488-bc-right-01",
+   "genotype": "Het",
+   "animal": "Het(1)",
+   "date": "19 Oct 2026",
+   "name": "Het(1) CD31_120_ 488 BC right-01"
+  },
+  {
+   "id": "2026-10-19-het-1-cd31-120-488-larger-center-01",
+   "genotype": "Het",
+   "animal": "Het(1)",
+   "date": "19 Oct 2026",
+   "name": "Het(1) CD31_120_ 488 larger center-01"
+  },
+  {
+   "id": "2026-10-19-het-1-cd31-120-488-larger-left-01",
+   "genotype": "Het",
+   "animal": "Het(1)",
+   "date": "19 Oct 2026",
+   "name": "Het(1) CD31_120_ 488 larger left-01"
+  },
+  {
+   "id": "2026-10-19-het-1-cd31-120-488-larger-right-01",
+   "genotype": "Het",
+   "animal": "Het(1)",
+   "date": "19 Oct 2026",
+   "name": "Het(1) CD31_120_ 488 larger right-01"
+  },
+  {
+   "id": "2026-10-19-het-1-cd31-120-488-smaller-center-01",
+   "genotype": "Het",
+   "animal": "Het(1)",
+   "date": "19 Oct 2026",
+   "name": "Het(1) CD31_120_ 488 smaller center-01"
+  },
+  {
+   "id": "2026-10-19-het-1-cd31-120-488-smaller-left-01",
+   "genotype": "Het",
+   "animal": "Het(1)",
+   "date": "19 Oct 2026",
+   "name": "Het(1) CD31_120_ 488 smaller left-01"
+  },
+  {
+   "id": "2026-10-19-het-1-cd31-120-488-smaller-right-01",
+   "genotype": "Het",
+   "animal": "Het(1)",
+   "date": "19 Oct 2026",
+   "name": "Het(1) CD31_120_ 488 smaller right-01"
+  },
+  {
+   "id": "2026-10-19-het-2-cd31-120-488-bc-left-01",
+   "genotype": "Het",
+   "animal": "Het(2)",
+   "date": "19 Oct 2026",
+   "name": "Het(2) CD31_120_ 488 BC LEFT-01"
+  },
+  {
+   "id": "2026-10-19-het-2-cd31-120-488-bc-right-01",
+   "genotype": "Het",
+   "animal": "Het(2)",
+   "date": "19 Oct 2026",
+   "name": "Het(2) CD31_120_ 488 BC right-01"
+  },
+  {
+   "id": "2026-10-19-het-2-cd31-120-488-bc-smaller-left-01",
+   "genotype": "Het",
+   "animal": "Het(2)",
+   "date": "19 Oct 2026",
+   "name": "Het(2) CD31_120_ 488 BC smaller left-01"
+  },
+  {
+   "id": "2026-10-19-het-2-cd31-120-488-bc-smaller-right-01",
+   "genotype": "Het",
+   "animal": "Het(2)",
+   "date": "19 Oct 2026",
+   "name": "Het(2) CD31_120_ 488 BC smaller right-01"
+  },
+  {
+   "id": "2026-10-19-het-2-cd31-120-488-bc-smaller-01",
+   "genotype": "Het",
+   "animal": "Het(2)",
+   "date": "19 Oct 2026",
+   "name": "Het(2) CD31_120_ 488 BC smaller-01"
+  },
+  {
+   "id": "2026-10-19-het-2-cd31-120-488-bc-01",
+   "genotype": "Het",
+   "animal": "Het(2)",
+   "date": "19 Oct 2026",
+   "name": "Het(2) CD31_120_ 488 BC-01"
+  },
+  {
+   "id": "2026-10-19-het-2-cd31-120-488-larger-center-01",
+   "genotype": "Het",
+   "animal": "Het(2)",
+   "date": "19 Oct 2026",
+   "name": "Het(2) CD31_120_ 488 larger center-01"
+  },
+  {
+   "id": "2026-10-19-het-2-cd31-120-488-larger-left-01",
+   "genotype": "Het",
+   "animal": "Het(2)",
+   "date": "19 Oct 2026",
+   "name": "Het(2) CD31_120_ 488 larger left-01"
+  },
+  {
+   "id": "2026-10-19-het-2-cd31-120-488-larger-right-01",
+   "genotype": "Het",
+   "animal": "Het(2)",
+   "date": "19 Oct 2026",
+   "name": "Het(2) CD31_120_ 488 larger right-01"
+  },
+  {
+   "id": "2026-10-19-wt-cd31-120-488-larger-center-01",
+   "genotype": "WT",
+   "animal": "WT 19 Oct",
+   "date": "19 Oct 2026",
+   "name": "WT CD31_120_ 488 larger center-01"
+  },
+  {
+   "id": "2026-10-19-wt-cd31-120-488-larger-left-01",
+   "genotype": "WT",
+   "animal": "WT 19 Oct",
+   "date": "19 Oct 2026",
+   "name": "WT CD31_120_ 488 larger left-01"
+  },
+  {
+   "id": "2026-10-19-wt-cd31-120-488-larger-right-01",
+   "genotype": "WT",
+   "animal": "WT 19 Oct",
+   "date": "19 Oct 2026",
+   "name": "WT CD31_120_ 488 larger right-01"
+  },
+  {
+   "id": "2026-10-19-wt-cd31-120-488-smaller-right-01",
+   "genotype": "WT",
+   "animal": "WT 19 Oct",
+   "date": "19 Oct 2026",
+   "name": "WT CD31_120_ 488 smaller right-01"
+  },
+  {
+   "id": "2026-10-19-wt-cd31-120-488-01-bc",
+   "genotype": "WT",
+   "animal": "WT 19 Oct",
+   "date": "19 Oct 2026",
+   "name": "WT CD31_120_ 488-01 BC"
+  },
+  {
+   "id": "2026-10-19-wt-cd31-120-488-02-bc-2",
+   "genotype": "WT",
+   "animal": "WT 19 Oct",
+   "date": "19 Oct 2026",
+   "name": "WT CD31_120_ 488-02 BC 2"
+  },
+  {
+   "id": "2026-10-19-wt-cd31-120-488-02-smaller-center",
+   "genotype": "WT",
+   "animal": "WT 19 Oct",
+   "date": "19 Oct 2026",
+   "name": "WT CD31_120_ 488-02 smaller center"
+  },
+  {
+   "id": "2026-10-22-het-3-cd31-488-pdx-568-bc-01",
+   "genotype": "Het",
+   "animal": "Het(3)",
+   "date": "22 Oct 2026",
+   "name": "Het(3) CD31_ 488_PDX_568 BC -01"
+  },
+  {
+   "id": "2026-10-22-het-3-cd31-488-pdx-568-bc-left-01",
+   "genotype": "Het",
+   "animal": "Het(3)",
+   "date": "22 Oct 2026",
+   "name": "Het(3) CD31_ 488_PDX_568 BC left-01"
+  },
+  {
+   "id": "2026-10-22-het-3-cd31-488-pdx-568-bc-right-01",
+   "genotype": "Het",
+   "animal": "Het(3)",
+   "date": "22 Oct 2026",
+   "name": "Het(3) CD31_ 488_PDX_568 BC right-01"
+  }
+ ]
+}

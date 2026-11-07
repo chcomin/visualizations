@@ -1,0 +1,560 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Capillary Network 3D</title>
+<meta name="description" content="Interactive 3D reconstruction of a cortical capillary network from a confocal stack (CD31).">
+<style>
+  :root {
+    --bg: #0d0e11;
+    --panel: rgba(22, 23, 27, 0.88);
+    --border: rgba(255, 255, 255, 0.09);
+    --ink: #ecebe7;
+    --ink2: #a9a7a1;
+    --ink3: #75736e;
+    --accent: #f08a4b;
+    --control: #2a2b30;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink);
+    font: 14px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; overflow: hidden; }
+  #view { position: fixed; inset: 0; }
+  #menu { position: fixed; top: 16px; left: 16px; width: 44px; height: 44px; border-radius: 10px; z-index: 2;
+    border: 1px solid var(--border); background: var(--panel); color: var(--ink); cursor: pointer;
+    display: grid; place-items: center; backdrop-filter: blur(8px); }
+  #menu:hover { background: rgba(40, 41, 47, 0.92); }
+  #menu:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  #panel { position: fixed; top: 70px; left: 16px; width: 320px; max-height: calc(100% - 86px); overflow-y: auto;
+    background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 18px 18px 14px;
+    backdrop-filter: blur(8px); z-index: 2; }
+  #panel[hidden] { display: none; }
+  h1 { font-size: 17px; font-weight: 600; margin: 0 0 4px; letter-spacing: 0.1px; }
+  .sub { color: var(--ink2); font-size: 13px; margin: 0 0 14px; }
+  .sample { display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; font-size: 13px; margin-bottom: 14px; }
+  .sample dt { color: var(--ink3); }
+  .sample dd { margin: 0; color: var(--ink); overflow-wrap: anywhere; }
+  .group { border-top: 1px solid var(--border); padding-top: 12px; margin-top: 12px; }
+  .label { color: var(--ink3); font-size: 12px; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 8px; }
+  .seg { display: flex; background: var(--control); border-radius: 8px; padding: 3px; gap: 3px; }
+  .seg button { flex: 1; border: 0; background: transparent; color: var(--ink2); padding: 6px 4px; border-radius: 6px;
+    font: inherit; font-size: 13px; cursor: pointer; }
+  .seg button[aria-pressed="true"] { background: #44464d; color: var(--ink); }
+  .row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 8px 0; font-size: 13px; }
+  .row input[type=range] { width: 140px; accent-color: var(--accent); }
+  .row input[type=checkbox] { accent-color: var(--accent); width: 15px; height: 15px; }
+  #legend { position: fixed; left: 16px; bottom: 16px; width: 220px; padding: 8px 12px 9px; border-radius: 10px;
+    background: var(--panel); border: 1px solid var(--border); backdrop-filter: blur(8px); pointer-events: none; }
+  #legend[hidden] { display: none; }
+  #legend .title { color: var(--ink2); font-size: 12px; margin-bottom: 5px; }
+  #legend .bar { height: 10px; border-radius: 5px; }
+  #legend .ticks { display: flex; justify-content: space-between; color: var(--ink2); font-size: 12px; margin-top: 3px;
+    font-variant-numeric: tabular-nums; }
+  .help { color: var(--ink3); font-size: 12px; margin-top: 12px; }
+  button.plain { border: 1px solid var(--border); background: var(--control); color: var(--ink); border-radius: 8px;
+    padding: 6px 10px; font: inherit; font-size: 13px; cursor: pointer; }
+  #loading { position: fixed; inset: 0; display: grid; place-items: center; color: var(--ink2); font-size: 15px;
+    pointer-events: none; }
+  #loading[hidden] { display: none; }
+  #loading span { background: var(--panel); padding: 8px 14px; border-radius: 8px; }
+  #current { position: fixed; top: 16px; left: 68px; height: 44px; max-width: calc(100% - 84px); z-index: 2;
+    display: flex; flex-direction: column; justify-content: center; padding: 0 14px; text-align: left;
+    border: 1px solid var(--border); border-radius: 10px; background: var(--panel); color: var(--ink);
+    backdrop-filter: blur(8px); cursor: pointer; font: inherit; }
+  #current:hover { background: rgba(40, 41, 47, 0.92); }
+  #current:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  #current .name { font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #current .date { font-size: 11.5px; color: var(--ink2); white-space: nowrap; }
+  .picker { display: flex; gap: 6px; }
+  .picker select { flex: 1; min-width: 0; background: var(--control); color: var(--ink); border: 1px solid var(--border);
+    border-radius: 8px; padding: 6px 8px; font: inherit; font-size: 13px; }
+  .picker button { width: 34px; padding: 6px 0; }
+  .picker button:disabled { opacity: 0.35; cursor: default; }
+  .scale-label { color: var(--ink); font-size: 12px; background: rgba(0,0,0,0.45); padding: 1px 6px; border-radius: 4px; }
+  @media (max-width: 640px) {
+    #panel { top: 70px; left: 16px; right: 16px; width: auto; max-height: calc(100% - 86px); }
+  }
+</style>
+</head>
+<body>
+<div id="view"></div>
+<div id="loading"><span>Loading the vessel network…</span></div>
+<button id="menu" aria-label="Menu" aria-expanded="false" aria-controls="panel">
+  <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path id="menuIcon" d="M3 5h14M3 10h14M3 15h14"
+    stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/></svg>
+</button>
+<button id="current" aria-label="Current sample; open the menu"><span class="name"></span><span class="date"></span></button>
+<div id="legend" hidden><div class="title"></div><div class="bar"></div><div class="ticks"></div></div>
+<aside id="panel" hidden>
+  <header>
+    <h1>Cortical capillary network</h1>
+    <p class="sub">3D reconstruction from a confocal stack (CD31)</p>
+  </header>
+  <div class="label">Sample</div>
+  <div class="picker">
+    <button class="plain" id="prev" aria-label="Previous sample">‹</button>
+    <select id="sampleSelect" aria-label="Sample"></select>
+    <button class="plain" id="next" aria-label="Next sample">›</button>
+  </div>
+  <dl class="sample" id="sample" style="margin-top: 12px"></dl>
+
+  <div class="group">
+    <div class="label">Color</div>
+    <div class="seg" role="group" aria-label="Color vessels by">
+      <button data-color="diameter" aria-pressed="true">Diameter</button>
+      <button data-color="depth" aria-pressed="false">Depth</button>
+      <button data-color="plain" aria-pressed="false">Plain</button>
+    </div>
+  </div>
+
+  <div class="group">
+    <div class="label">Display</div>
+    <label class="row">Image below (projection) <input type="checkbox" id="mip" checked></label>
+    <label class="row">Image brightness <input type="range" id="mipOpacity" min="0" max="1" step="0.05" value="0.8"></label>
+    <div class="row"><button class="plain" id="reset">Reset view</button><button class="plain" id="top">Top view</button></div>
+  </div>
+
+  <p class="help">Drag to rotate · scroll to zoom · right-drag (or two fingers) to pan</p>
+</aside>
+
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+<script type="module">
+import * as THREE from "three";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { CSS2DRenderer, CSS2DObject } from "three/addons/renderers/CSS2DRenderer.js";
+
+const SIDES = 10;
+// Sequential color ramps (perceptually ordered), as [position, r, g, b]
+const RAMPS = {
+  diameter: [[0, 0.17, 0.35, 0.80], [0.3, 0.16, 0.66, 0.78], [0.55, 0.55, 0.82, 0.45], [0.8, 0.97, 0.78, 0.25], [1, 0.95, 0.40, 0.22]],
+  depth: [[0, 0.98, 0.86, 0.55], [0.35, 0.94, 0.55, 0.30], [0.7, 0.72, 0.25, 0.42], [1, 0.36, 0.17, 0.55]],
+};
+const PLAIN = new THREE.Color(0.86, 0.33, 0.27);
+const DIAMETER_RANGE = [2, 10];  // µm
+
+const view = document.getElementById("view");
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+view.appendChild(renderer.domElement);
+const labels = new CSS2DRenderer();
+labels.setSize(window.innerWidth, window.innerHeight);
+Object.assign(labels.domElement.style, { position: "fixed", inset: "0", pointerEvents: "none" });
+view.appendChild(labels.domElement);
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0d0e11);
+const camera = new THREE.PerspectiveCamera(35, window.innerWidth / window.innerHeight, 1, 20000);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.autoRotateSpeed = 1.0;  // with the time step passed to update(): one turn per minute
+scene.add(new THREE.HemisphereLight(0xffffff, 0x30323a, 1.1));
+const sun = new THREE.DirectionalLight(0xffffff, 1.6);
+sun.position.set(0.5, 1, 0.6);
+scene.add(sun);
+const fill = new THREE.DirectionalLight(0xffffff, 0.5);
+fill.position.set(-0.6, -0.3, -0.8);
+scene.add(fill);
+
+const state = { color: "diameter" };
+let meta, data, tubes, spheres, mipPlane, scaleBar, edgeStarts, vertexSample, tipAt, sphereIsTip;
+let samples = [], current = -1, loadToken = 0;
+
+function ramp(name, t) {
+  const stops = RAMPS[name];
+  t = Math.min(1, Math.max(0, t));
+  for (let i = 1; i < stops.length; i++) {
+    if (t <= stops[i][0]) {
+      const [p0, ...a] = stops[i - 1], [p1, ...b] = stops[i];
+      const f = (t - p0) / (p1 - p0);
+      return [0, 1, 2].map(k => a[k] + f * (b[k] - a[k]));
+    }
+  }
+  return stops[stops.length - 1].slice(1);
+}
+
+function colorOf(r, z) {
+  if (state.color === "diameter") return ramp("diameter", (2 * r - DIAMETER_RANGE[0]) / (DIAMETER_RANGE[1] - DIAMETER_RANGE[0]));
+  if (state.color === "depth") return ramp("depth", z / meta.shape_um[0]);
+  return [PLAIN.r, PLAIN.g, PLAIN.b];
+}
+
+// data: (z, y, x) µm -> world: x right, y up (top of the stack up), z toward the viewer (image rows)
+function world(z, y, x, out) {
+  const [d, h, w] = meta.shape_um;
+  out.set(x - w / 2, d / 2 - z, y - h / 2);
+  return out;
+}
+
+// Tubes and their flat end caps (at the tips), as one mesh. Every vertex remembers its sample (for the colors).
+function buildTubes() {
+  const pos = [], nor = [], idx = [];
+  const sample = [];
+  const rad = new THREE.Vector3();
+  // ring of SIDES vertices around c (frame n, b), shifted by `along` on the axis o; normal = radial*wr + o*wa
+  function ring(c, n, b, r, o, along, wr, wa, si) {
+    const base = pos.length / 3;
+    for (let s = 0; s < SIDES; s++) {
+      const th = (s / SIDES) * Math.PI * 2;
+      rad.copy(n).multiplyScalar(Math.cos(th)).addScaledVector(b, Math.sin(th));
+      pos.push(c.x + o.x * along + rad.x * r, c.y + o.y * along + rad.y * r, c.z + o.z * along + rad.z * r);
+      nor.push(rad.x * wr + o.x * wa, rad.y * wr + o.y * wa, rad.z * wr + o.z * wa);
+      sample.push(si);
+    }
+    return base;
+  }
+  // quads between two rings, r1 farther along the tube axis than r0 (outward-facing winding)
+  function connect(r0, r1) {
+    for (let s = 0; s < SIDES; s++) {
+      const s1 = (s + 1) % SIDES;
+      idx.push(r0 + s, r0 + s1, r1 + s, r0 + s1, r1 + s1, r1 + s);
+    }
+  }
+  // closes a tip with a disk facing o (outward)
+  function cap(c, n, b, r, o, si, atStart) {
+    const rim = ring(c, n, b, r, o, 0, 0, 1, si), centre = ring(c, n, b, 0, o, 0, 0, 1, si);
+    if (atStart) connect(centre, rim); else connect(rim, centre);
+  }
+
+  let offset = 0;
+  const minus = new THREE.Vector3(), tmp = new THREE.Vector3();
+  meta.counts.forEach((count, e) => {
+    const p = [], T = [], N = [], B = [], rings = [];
+    for (let i = 0; i < count; i++) {
+      const k = (offset + i) * 4;
+      p.push(world(data[k], data[k + 1], data[k + 2], new THREE.Vector3()));
+    }
+    const n = new THREE.Vector3();
+    for (let i = 0; i < count; i++) {
+      const t = new THREE.Vector3().subVectors(p[Math.min(i + 1, count - 1)], p[Math.max(i - 1, 0)]);
+      if (t.lengthSq() < 1e-12) t.set(1, 0, 0);
+      t.normalize();
+      if (i === 0) {  // any normal perpendicular to the first tangent
+        tmp.set(Math.abs(t.x) < 0.9 ? 1 : 0, Math.abs(t.x) < 0.9 ? 0 : 1, 0);
+        n.crossVectors(t, tmp).normalize();
+      } else {        // parallel transport: remove the tangent component of the previous normal
+        n.addScaledVector(t, -n.dot(t));
+        if (n.lengthSq() < 1e-8) { tmp.set(0, 1, 0); n.crossVectors(t, tmp); }
+        n.normalize();
+      }
+      T.push(t); N.push(n.clone()); B.push(new THREE.Vector3().crossVectors(t, n));
+      rings.push(ring(p[i], N[i], B[i], data[(offset + i) * 4 + 3], t, 0, 1, 0, offset + i));
+      if (i > 0) connect(rings[i - 1], rings[i]);
+    }
+    const last = count - 1;
+    if (tipAt[e][0]) cap(p[0], N[0], B[0], data[offset * 4 + 3], minus.copy(T[0]).negate(), offset, true);
+    if (tipAt[e][1]) cap(p[last], N[last], B[last], data[(offset + last) * 4 + 3], T[last], offset + last, false);
+    offset += count;
+  });
+  const geom = new THREE.BufferGeometry();
+  geom.setAttribute("position", new THREE.BufferAttribute(new Float32Array(pos), 3));
+  geom.setAttribute("normal", new THREE.BufferAttribute(new Float32Array(nor), 3));
+  geom.setAttribute("color", new THREE.BufferAttribute(new Float32Array(pos.length), 3));
+  geom.setIndex(new THREE.BufferAttribute(new Uint32Array(idx), 1));
+  geom.computeBoundingSphere();
+  vertexSample = Uint32Array.from(sample);
+  return geom;
+}
+
+function buildSpheres() {
+  const geom = new THREE.SphereGeometry(1, 16, 12);
+  const mat = new THREE.MeshStandardMaterial({ roughness: 0.55, metalness: 0.0 });
+  const mesh = new THREE.InstancedMesh(geom, mat, meta.n_spheres);
+  mesh.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(meta.n_spheres * 3), 3);
+  return mesh;
+}
+
+// Spheres fill the joints at branch points (the tips are closed by the flat caps)
+function placeSpheres() {
+  const m = new THREE.Matrix4(), v = new THREE.Vector3(), s = new THREE.Vector3(), q = new THREE.Quaternion();
+  for (let i = 0; i < meta.n_spheres; i++) {
+    const k = (edgeStarts + i) * 4;
+    const r = sphereIsTip[i] ? 0 : data[k + 3];
+    world(data[k], data[k + 1], data[k + 2], v);
+    m.compose(v, q, s.set(r, r, r));
+    spheres.setMatrixAt(i, m);
+  }
+  spheres.instanceMatrix.needsUpdate = true;
+  spheres.computeBoundingSphere();
+}
+
+function applyColors() {
+  const col = tubes.geometry.getAttribute("color");
+  const cache = new Float32Array(edgeStarts * 3);
+  for (let i = 0; i < edgeStarts; i++) cache.set(colorOf(data[i * 4 + 3], data[i * 4]), i * 3);
+  for (let v = 0; v < vertexSample.length; v++) {
+    const c = vertexSample[v] * 3;
+    col.setXYZ(v, cache[c], cache[c + 1], cache[c + 2]);
+  }
+  col.needsUpdate = true;
+  for (let i = 0; i < meta.n_spheres; i++) {
+    const k = (edgeStarts + i) * 4, c = colorOf(data[k + 3], data[k]);
+    spheres.instanceColor.setXYZ(i, c[0], c[1], c[2]);
+  }
+  spheres.instanceColor.needsUpdate = true;
+  updateLegend();
+}
+
+function updateLegend() {
+  const legend = document.getElementById("legend");
+  if (state.color === "plain") { legend.hidden = true; return; }
+  legend.hidden = false;
+  legend.querySelector(".title").textContent = state.color === "diameter" ? "Vessel diameter" : "Depth below the top of the stack";
+  const stops = Array.from({ length: 11 }, (_, i) => {
+    const c = ramp(state.color, i / 10).map(x => Math.round(255 * Math.pow(x, 1 / 1)));
+    return `rgb(${c.join(",")}) ${i * 10}%`;
+  });
+  legend.querySelector(".bar").style.background = `linear-gradient(90deg, ${stops.join(",")})`;
+  const ticks = state.color === "diameter"
+    ? [`≤ ${DIAMETER_RANGE[0]} µm`, `${(DIAMETER_RANGE[0] + DIAMETER_RANGE[1]) / 2} µm`, `≥ ${DIAMETER_RANGE[1]} µm`]
+    : ["0 µm", `${Math.round(meta.shape_um[0] / 2)} µm`, `${Math.round(meta.shape_um[0])} µm`];
+  legend.querySelector(".ticks").innerHTML = ticks.map(t => `<span>${t}</span>`).join("");
+}
+
+// 100 µm scale bar along the front edge of the projection image
+function buildScaleBar() {
+  const [d, h, w] = meta.shape_um, group = new THREE.Group();
+  const y = -d / 2, z = h / 2 + 12;
+  const bar = new THREE.Mesh(new THREE.BoxGeometry(100, 2.5, 2.5), new THREE.MeshBasicMaterial({ color: 0xffffff }));
+  bar.position.set(w / 2 - 50, y, z);
+  group.add(bar);
+  const div = document.createElement("div");
+  div.className = "scale-label";
+  div.textContent = "100 µm";
+  const label = new CSS2DObject(div);
+  label.position.set(w / 2 - 50, y, z + 22);
+  group.add(label);
+  return group;
+}
+
+function buildMip(texture) {
+  const [d, h, w] = meta.shape_um;
+  const mat = new THREE.MeshBasicMaterial({ map: texture, transparent: true, opacity: 0.8, depthWrite: false });
+  const plane = new THREE.Mesh(new THREE.PlaneGeometry(w, h), mat);
+  plane.rotation.x = -Math.PI / 2;
+  return plane;
+}
+
+function placeMip() {
+  mipPlane.position.set(0, -meta.shape_um[0] / 2 - 1.5, 0);
+}
+
+// Edge ends shared with no other drawn edge are tips; spheres at a tip are tip spheres (end points and sphere
+// centres are the same node centres, so the coordinates match exactly)
+function classifyEnds() {
+  const key = i => `${data[i * 4]},${data[i * 4 + 1]},${data[i * 4 + 2]}`;
+  const ends = new Map();
+  let offset = 0;
+  const endKeys = meta.counts.map(count => {
+    const kk = [key(offset), key(offset + count - 1)];
+    offset += count;
+    kk.forEach(k => ends.set(k, (ends.get(k) || 0) + 1));
+    return kk;
+  });
+  tipAt = endKeys.map(kk => kk.map(k => ends.get(k) === 1));
+  sphereIsTip = Array.from({ length: meta.n_spheres }, (_, i) => (ends.get(key(edgeStarts + i)) || 0) <= 1);
+}
+
+function resetView(top = false) {
+  const [d, h, w] = meta.shape_um, size = Math.max(w, h);
+  const fit = Math.max(1, 1.25 / camera.aspect);  // narrow screens need more distance
+  controls.target.set(0, 0, top ? 0 : h * 0.08);  // a little toward the front edge, to keep the scale bar in view
+  if (top) camera.position.set(0, size * 1.75 * fit, 0.001);
+  else camera.position.set(size * 0.5 * fit, size * 0.95 * fit, size * 1.4 * fit);
+  camera.up.set(0, 1, 0);
+  controls.update();
+  window.requestRender();
+}
+
+// vessels.bin.gz: int16 arrays z, y, x, r (in pos_step / r_step units), each with the samples of all edges and
+// then the spheres; within an edge, every sample after the first is the difference from the previous one
+async function fetchGeometry(url, m) {
+  const response = await fetch(url);
+  if (!response.ok) throw new Error(`${url}: ${response.status}`);
+  let buffer = await response.arrayBuffer();
+  const head = new Uint8Array(buffer, 0, 2);
+  if (head[0] === 0x1f && head[1] === 0x8b)  // still gzip-compressed (not decoded by the browser)
+    buffer = await new Response(new Blob([buffer]).stream().pipeThrough(new DecompressionStream("gzip"))).arrayBuffer();
+  const q = new Int16Array(buffer), n = q.length / 4, out = new Float32Array(n * 4);
+  const scale = [m.pos_step, m.pos_step, m.pos_step, m.r_step];
+  let offset = 0;
+  for (const count of m.counts) {
+    for (let ch = 0; ch < 4; ch++) {
+      let acc = 0;
+      for (let i = 0; i < count; i++) {
+        const v = q[ch * n + offset + i];
+        acc = i === 0 ? v : acc + v;
+        out[(offset + i) * 4 + ch] = acc * scale[ch];
+      }
+    }
+    offset += count;
+  }
+  for (let i = offset; i < n; i++) for (let ch = 0; ch < 4; ch++) out[i * 4 + ch] = q[ch * n + i] * scale[ch];
+  return out;
+}
+
+function disposeSample() {
+  if (!tubes) return;
+  scene.remove(tubes, spheres, mipPlane, scaleBar);
+  tubes.geometry.dispose();
+  spheres.geometry.dispose(); spheres.material.dispose(); spheres.dispose();
+  mipPlane.geometry.dispose(); mipPlane.material.map.dispose(); mipPlane.material.dispose();
+  scaleBar.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) o.material.dispose(); });
+}
+
+async function loadSample(index) {
+  const token = ++loadToken, info = samples[index], base = `data/${info.id}/`;
+  const loading = document.getElementById("loading");
+  loading.firstElementChild.textContent = `Loading ${info.name}…`;
+  loading.hidden = false;
+  const m = await fetch(base + "meta.json").then(r => r.json());
+  const [geometry, texture] = await Promise.all([
+    fetchGeometry(base + "vessels.bin.gz", m), new THREE.TextureLoader().loadAsync(base + "mip.jpg")]);
+  if (token !== loadToken) { texture.dispose(); return; }  // another sample was chosen meanwhile
+  const previousShape = meta && meta.shape_um;
+  disposeSample();
+  meta = m; data = geometry; current = index;
+  edgeStarts = meta.counts.reduce((a, b) => a + b, 0);
+  classifyEnds();
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
+
+  tubes = new THREE.Mesh(buildTubes(), tubeMaterial);
+  spheres = buildSpheres();
+  placeSpheres();
+  applyColors();
+  mipPlane = buildMip(texture);
+  placeMip();
+  mipPlane.visible = document.getElementById("mip").checked;
+  mipPlane.material.opacity = +document.getElementById("mipOpacity").value;
+  scaleBar = buildScaleBar();
+  scene.add(tubes, spheres, mipPlane, scaleBar);
+  // keep the view when the new stack has the same field; otherwise frame it again
+  const same = previousShape && meta.shape_um.slice(1).every((v, k) => Math.abs(v - previousShape[k + 1]) < 1);
+  if (!same) resetView();
+  showSampleInfo();
+  loading.hidden = true;
+  window.requestRender();
+}
+
+function showSampleInfo() {
+  const info = samples[current], [d, h, w] = meta.shape_um;
+  document.getElementById("sample").innerHTML = [
+    ["Genotype", info.genotype], ["Date", info.date],
+    ["Field", `${Math.round(w)} × ${Math.round(h)} × ${Math.round(d)} µm`],
+    ["Network", `${meta.counts.length.toLocaleString("en")} segments, ${meta.n_branch_points.toLocaleString("en")} branch points`],
+  ].map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join("");
+  document.querySelector("#current .name").textContent = info.name;
+  document.querySelector("#current .date").textContent = `${info.genotype} · ${info.date}`;
+  document.getElementById("sampleSelect").value = info.id;
+  document.getElementById("prev").disabled = current === 0;
+  document.getElementById("next").disabled = current === samples.length - 1;
+  const url = new URL(window.location);
+  url.searchParams.set("sample", info.id);
+  history.replaceState(null, "", url);
+}
+
+const tubeMaterial = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.55, metalness: 0.0, side: THREE.DoubleSide });
+
+async function main() {
+  const list = await fetch("samples.json").then(r => r.json());
+  samples = list.samples;
+  const select = document.getElementById("sampleSelect");
+  for (const date of [...new Set(samples.map(s => s.date))]) {
+    const group = document.createElement("optgroup");
+    group.label = date;
+    for (const s of samples.filter(s => s.date === date)) group.append(new Option(`${s.name}`, s.id));
+    select.append(group);
+  }
+  const wanted = new URLSearchParams(window.location.search).get("sample");
+  const start = Math.max(0, samples.findIndex(s => s.id === (wanted || list.default)));
+  await loadSample(start);
+  startAutoRotate();
+
+  select.addEventListener("change", () => loadSample(samples.findIndex(s => s.id === select.value)));
+  document.getElementById("prev").addEventListener("click", () => current > 0 && loadSample(current - 1));
+  document.getElementById("next").addEventListener("click", () => current < samples.length - 1 && loadSample(current + 1));
+  document.getElementById("current").addEventListener("click", () => setMenu(true));
+  document.querySelectorAll("[data-color]").forEach(btn => btn.addEventListener("click", () => {
+    state.color = btn.dataset.color;
+    document.querySelectorAll("[data-color]").forEach(b => b.setAttribute("aria-pressed", String(b === btn)));
+    applyColors();
+  }));
+  document.getElementById("mip").addEventListener("change", e => { mipPlane.visible = e.target.checked; });
+  document.getElementById("mipOpacity").addEventListener("input", e => { mipPlane.material.opacity = +e.target.value; });
+  document.getElementById("reset").addEventListener("click", () => resetView());
+  document.getElementById("top").addEventListener("click", () => resetView(true));
+}
+
+// Menu: the panel opens from the button; Escape or a click on the view closes it
+const panel = document.getElementById("panel"), menu = document.getElementById("menu");
+function setMenu(open) {
+  panel.hidden = !open;
+  menu.setAttribute("aria-expanded", String(open));
+  document.getElementById("menuIcon").setAttribute("d", open ? "M5 5l10 10M15 5L5 15" : "M3 5h14M3 10h14M3 15h14");
+}
+menu.addEventListener("click", () => setMenu(panel.hidden));
+document.addEventListener("keydown", e => { if (e.key === "Escape") setMenu(false); });
+renderer.domElement.addEventListener("pointerdown", () => setMenu(false));
+
+// Rotates by itself; stops while the user drags (rotate or pan; zooming with the wheel does not stop it), and
+// resumes RESUME_MS after the last pointer is released
+const RESUME_MS = 3000;
+let resumeTimer;
+const activePointers = new Set();
+function startAutoRotate() {
+  controls.autoRotate = true;
+  renderer.domElement.addEventListener("pointerdown", e => {
+    activePointers.add(e.pointerId);
+    clearTimeout(resumeTimer);
+    controls.autoRotate = false;
+  });
+  const release = e => {
+    if (!activePointers.delete(e.pointerId) || activePointers.size) return;
+    clearTimeout(resumeTimer);
+    resumeTimer = setTimeout(() => { controls.autoRotate = true; window.requestRender(); }, RESUME_MS);
+  };
+  window.addEventListener("pointerup", release);
+  window.addEventListener("pointercancel", release);
+}
+
+window.addEventListener("resize", () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  labels.setSize(window.innerWidth, window.innerHeight);
+  window.requestRender();
+});
+
+// Render only when something changed (camera moving, rotation, or a control)
+let dirty = true;
+window.requestRender = () => { dirty = true; };
+controls.addEventListener("change", () => { dirty = true; });
+document.addEventListener("input", () => { dirty = true; });
+document.addEventListener("click", () => { dirty = true; });
+// The rotation follows the elapsed time, so its speed does not depend on the frame rate
+const clock = new THREE.Clock();
+renderer.setAnimationLoop(() => {
+  const moved = controls.update(Math.min(clock.getDelta(), 0.1));
+  if (!moved && !dirty) return;
+  dirty = false;
+  renderer.render(scene, camera);
+  labels.render(scene, camera);
+});
+
+main().catch(err => {
+  const loading = document.getElementById("loading");
+  loading.hidden = false;
+  loading.firstElementChild.textContent = "Could not load the data (" + err.message +
+    "). Open this page through a web server, not as a local file.";
+  console.error(err);
+});
+</script>
+</body>
+</html>
